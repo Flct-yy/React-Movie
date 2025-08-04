@@ -1,22 +1,49 @@
 import "../scss/Home.scss"
 
 import MovieCard from "../cpmponents/MovieCard"
-import { useState } from "react"
-import type { Movie } from "../types/movie"
+import { useState, useEffect } from "react"
+import { getPopularMovies, searchMovies } from "../services/api"
+import type { Movie } from "../types/Movie";
+
 
 function Home() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [movies, setmovies] = useState<Movie[]>([]);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const loadPopularMovies = async () => {
+      try {
+        const popularMovies = await getPopularMovies();
+        setmovies(popularMovies)
+        setError("")
+      } catch (error) {
+        console.log(error);
+        setError("Failed to load movies...")
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  const movies: Movie[] = [
-    { id: 1, title: "Tim's Film", url: "", release_date: "2021" },
-    { id: 2, title: "John's Film", url: "", release_date: "2022" },
-    { id: 3, title: "Tom's Film", url: "", release_date: "2023" },
-    { id: 4, title: "Alax's Film", url: "", release_date: "2024" },
-  ]
+    loadPopularMovies();
+  }, [])
 
-  const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
-    alert("Search")
-    event.preventDefault()
+  const handleSearch = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if(searchQuery.trim() === "") return;
+    if(loading)return
+
+    try {
+      const searchResults = await searchMovies(searchQuery);
+      setmovies(searchResults)
+      setError("")
+    } catch (error) {
+      console.log(error);
+      setError("Failed to search movies...")
+    }finally{
+      setLoading(false)
+    }
+
   }
 
   return (
@@ -32,15 +59,20 @@ function Home() {
         <button type="submit" className="search-button">Search</button>
       </form>
 
-      <div className="movies-grid">
-        {movies.map((movie) =>
+      {error && <div className="error-message">{error}</div>}
+      {loading ?
+        <div className="loading">Loading...</div> :
+        <div className="movies-grid">
+          {movies.map((movie) =>
           // 实时更新搜索结果
           // movie.title.toLowerCase().includes(searchQuery.trim().toLowerCase()) && 
           (
             <MovieCard movie={movie} key={movie.id} />
           )
-        )}
-      </div>
+          )}
+        </div>
+      }
+
     </div>
   )
 }
