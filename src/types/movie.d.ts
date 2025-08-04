@@ -1,5 +1,5 @@
 
-// 定义 movie 的类型
+// 定义 Movie 的类型
 export interface Movie {
   adult: boolean;
   backdrop_path: string | null;
